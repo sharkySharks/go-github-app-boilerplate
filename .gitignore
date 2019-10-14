@@ -10,3 +10,12 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+#intellij files
+.idea/*
+*.iml
+
+#private key files
+.env
+secrets.yaml
+secrets.*.yaml
