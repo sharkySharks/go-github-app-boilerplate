@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+/*
+	Add top level GitHub request payload keys to this struct based on the events the app is subscribing to and pull in
+	the type from the go-github/github library
+*/
 type WebhookAPIRequest struct {
 	Action       string              `json:"action"`
 	Installation AppInstallation     `json:"installation"`
@@ -59,13 +63,13 @@ func app(w http.ResponseWriter, r *http.Request) {
 	/*
 		match the requestID to the webhook event logs under the github app settings in the github web console
 		this is helpful for debugging webhook events
-	 */
+	*/
 	requestID := r.Header.Get("X-GitHub-Delivery")
 	/*
 		this section is where webhook events will be received after passing through middleware validation
 		below is an example of handling a comment on a pull request
 		to work, the GitHub app would need to be configured in GitHub to subscribe to Issue Comment creation events
-	 */
+	*/
 	if r.Method == "POST" {
 		switch githubEvent := r.Header.Get("X-GitHub-Event"); githubEvent {
 		case "issue_comment":
@@ -74,7 +78,7 @@ func app(w http.ResponseWriter, r *http.Request) {
 				switch comment {
 				case "run all tests":
 					log.Info("Received event to run all tests")
-				//	execute some code here based on receiving a comment on a pull request
+					//	execute some code here based on receiving a comment on a pull request
 				}
 			}
 		default:
