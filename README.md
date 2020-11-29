@@ -1,5 +1,7 @@
 # go-github-app-boilerplate
-Boilerplate for creating a GitHub Application in Golang
+Boilerplate for creating a GitHub App in Golang.
+
+[GitHub apps](https://docs.github.com/en/free-pro-team@latest/developers/apps/getting-started-with-apps) are APIs that are configured with specific GitHub API credentials so that the API can receive and authenticate payloads from GitHub events.
 
 ## Getting started
 
