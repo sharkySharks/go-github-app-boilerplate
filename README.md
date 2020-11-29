@@ -142,3 +142,10 @@ In order for your deployment service to be able to access your s3 bucket, you wi
 
 * Once these are setup, just make sure that you have your S3 bucket information saved in `.aws/config.yaml`, following the steps at the beginning of this section, titled: `Pulling Your Secrets From An s3 Bucket`, or set the environment variables in your shell window.
 
+## Future Features
+
+"...a work is never truly completed [...] but abandoned..." Paul Valéry
+
+Nice-to-have features:
+- convert to use go modules
+- add testing
