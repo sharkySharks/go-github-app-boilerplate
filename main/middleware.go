@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/github"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 var ghClient *github.Client
@@ -54,7 +55,7 @@ func authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func initClient(installationId int) (*github.Client, error) {
+func initClient(installationId int64) (*github.Client, error) {
 	tr := http.DefaultTransport
 	itr, err := ghinstallation.New(
 		tr,
