@@ -25,6 +25,7 @@ FROM alpine:3.12
 
 # Copy our static executable.
 COPY --from=builder /go/bin/go-github-app-boilerplate /bin/go-github-app-boilerplate
+# Copy the config to the root.
 COPY --from=builder /secrets.yaml /secrets.yaml
 
 CMD ["/bin/go-github-app-boilerplate"]
