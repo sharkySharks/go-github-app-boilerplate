@@ -33,10 +33,9 @@ Following the guidelines of [How to Write Go Code](https://golang.org/doc/code.h
                 ├── main
                 │   ├── config.go
                 │   ├── main.go
-                │   └── middleware.go
-                ├── vendor/               <- has all the vendor packages/dependencies
-                ├── Gopkg.lock            <- dependency lock file
-                ├── Gopkg.toml            <- dependency management file
+                │   ├── middleware.go
+                │   ├── go.mod
+                │   └── go.sum
                 ├── secrets.example.yaml
                 └── secrets.yaml
 ```
@@ -82,9 +81,9 @@ This project uses [dep](https://golang.github.io/dep/) to manage dependencies. S
 
 2. Check that you have a `secrets.yaml` file with your GitHub application configuration values in the root of the repository.
 
-3. From inside the `main/` directory, run `go get && go install`, which will create the executable file `main` in the `$GOBIN` directory.
+3. From inside the `main/` directory, run `go get && go install`, which will create the executable file `go-github-app-boilerplate` in the `$GOBIN` directory.
 
-4. From the root of the repository, run `$GOBIN/main` and you should see a server listening message. This server is set up to receive webhook requests for the application configured in `secrets.yaml`.
+4. From the root of the repository, run `$GOBIN/go-github-app-boilerplate` and you should see a server listening message. This server is set up to receive webhook requests for the application configured in `secrets.yaml`.
 
 5. Get your smee.io link that you [setup earlier](https://developer.github.com/apps/quickstart-guides/setting-up-your-development-environment/#step-1-start-a-new-smee-channel), and run that in another terminal window. Example: `smee --url https://smee.io/qrfeVRbFbffd6vD --path / --port 8080`
 
@@ -152,5 +151,4 @@ In order for your deployment service to be able to access your s3 bucket, you wi
 "...a work is never truly completed [...] but abandoned..." Paul Valéry
 
 Nice-to-have features:
-- convert to use go modules
 - add testing

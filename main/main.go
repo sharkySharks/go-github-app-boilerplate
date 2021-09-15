@@ -1,11 +1,12 @@
 package main
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/google/go-github/github"
 	"github.com/justinas/alice"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strings"
 )
 
 /*
@@ -21,7 +22,7 @@ type WebhookAPIRequest struct {
 }
 
 type AppInstallation struct {
-	Id int `json:"id"`
+	Id int64 `json:"id"`
 }
 
 var (
@@ -81,13 +82,17 @@ func app(w http.ResponseWriter, r *http.Request) {
 					//	execute some code here based on receiving a comment on a pull request
 				}
 			}
+		case "installation":
+			if payload.Action == "created" {
+				log.Info("Received installation request")
+			}
 		default:
 			log.Error("No handler for event type: ", githubEvent, "\nRequest ID: ", requestID)
-			http.Error(w, http.StatusText(404), 404)
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	} else {
 		log.Error("Method not allowed: ", r.Method)
-		http.Error(w, http.StatusText(405), 405)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 }

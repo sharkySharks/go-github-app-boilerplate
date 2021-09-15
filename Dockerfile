@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine
+FROM golang:1.17-alpine as builder
 
 ENV GOBIN $GOPATH/bin
 RUN apk update && \
@@ -12,15 +12,19 @@ WORKDIR $GOPATH/src/github.com/sharkySharks/go-github-app-boilerplate/
 COPY . .
 
 RUN cd main && \
-    go get -d -v && \
-    go install -v && \
-    apk del build-dependencies && \
-    rm -rf /var/cache/apk/*
+    go mod tidy && \
+    go install && \ 
+    cp secrets.yaml /secrets.yaml
 
 EXPOSE 8080
 
 ARG env=prod
 ENV env=${env}
 
-CMD ["/go/bin/main"]
+FROM alpine:3.12
 
+# Copy our static executable.
+COPY --from=builder /go/bin/go-github-app-boilerplate /bin/go-github-app-boilerplate
+COPY --from=builder /secrets.yaml /secrets.yaml
+
+CMD ["/bin/go-github-app-boilerplate"]
