@@ -1,13 +1,14 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"os"
 )
 
 type AWSConfig struct {
@@ -18,7 +19,7 @@ type Config struct {
 	GithubApp GithubConfig `yaml:"github"`
 }
 type GithubConfig struct {
-	GithubAppIdentifier int    `yaml:"github-app-identifier"`
+	GithubAppIdentifier int64  `yaml:"github-app-identifier"`
 	GithubPrivateKey    string `yaml:"github-private-key"`
 	GithubWebhookSecret string `yaml:"github-webhook-secret"`
 }
