@@ -1,4 +1,4 @@
-module github.hpe.com/sharkysharks/go-github-app-boilerplate
+module github.com/sharkysharks/go-github-app-boilerplate
 
 go 1.17
 
