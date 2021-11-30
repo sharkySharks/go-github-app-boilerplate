@@ -2,43 +2,16 @@
 
 ![go-github](go-github.png)
 
-Boilerplate for creating a GitHub App in Golang.
+Boilerplate for creating a GitHub App in Golang. This is the `container` version of the application setup. If you would like to run a github application using [serverless and AWS lambdas](https://www.serverless.com/) then checkout the `serverless` branch.
 
 [GitHub apps](https://docs.github.com/en/free-pro-team@latest/developers/apps/getting-started-with-apps) are APIs that are configured with specific GitHub API credentials so that the API can receive and authenticate payloads from GitHub events.
 
 ## Getting started
 
 This repository is written in [golang](https://golang.org/), aka `go`. If you have not installed go before and you wish to make contributions to this repository, then follow these [installation instructions](https://golang.org/doc/install) before proceeding.
-[How to Write Go Code](https://golang.org/doc/code.html) is a great starter document to help set up your environment properly.
+This code uses golang version 1.17 and [go modules](https://go.dev/blog/using-go-modules).
 
 You can also run this application using Docker, and therefore do not need to install golang.
-
-### Expected directory structure
-
-Following the guidelines of [How to Write Go Code](https://golang.org/doc/code.html), your directory structure should mirror the following:
-
- ```
- .
- └── go 
-    ├── bin
-    ├── pkg
-    └── src
-      └── github.com
-          └── sharkySharks
-             └── go-github-app-boilerplate
-                ├── .aws
-                │   └── config.yaml
-                ├── Dockerfile
-                ├── README.md
-                ├── main
-                │   ├── config.go
-                │   ├── main.go
-                │   ├── middleware.go
-                │   ├── go.mod
-                │   └── go.sum
-                ├── secrets.example.yaml
-                └── secrets.yaml
-```
 
 ### GitHub Application Setup and Secrets Configuration
 
