@@ -2,149 +2,84 @@
 
 ![go-github](go-github.png)
 
-Boilerplate for creating a GitHub App in Golang.
+Boilerplate for creating a GitHub App in Golang. This is the serverless/lambda version. For the container version of the application, checkout the `container` branch.
 
 [GitHub apps](https://docs.github.com/en/free-pro-team@latest/developers/apps/getting-started-with-apps) are APIs that are configured with specific GitHub API credentials so that the API can receive and authenticate payloads from GitHub events.
+For a list of github event types that can be subscribed to and acted upon, see github docs: https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 
-## Getting started
+This application uses Golang version >=1.16 and [go modules](https://go.dev/blog/using-go-modules).
 
-This repository is written in [golang](https://golang.org/), aka `go`. If you have not installed go before and you wish to make contributions to this repository, then follow these [installation instructions](https://golang.org/doc/install) before proceeding.
-[How to Write Go Code](https://golang.org/doc/code.html) is a great starter document to help set up your environment properly.
-
-You can also run this application using Docker, and therefore do not need to install golang.
-
-### Expected directory structure
-
-Following the guidelines of [How to Write Go Code](https://golang.org/doc/code.html), your directory structure should mirror the following:
-
- ```
- .
- └── go 
-    ├── bin
-    ├── pkg
-    └── src
-      └── github.com
-          └── sharkySharks
-             └── go-github-app-boilerplate
-                ├── .aws
-                │   └── config.yaml
-                ├── Dockerfile
-                ├── README.md
-                ├── main
-                │   ├── config.go
-                │   ├── main.go
-                │   ├── middleware.go
-                │   ├── go.mod
-                │   └── go.sum
-                ├── secrets.example.yaml
-                └── secrets.yaml
-```
-
-### GitHub Application Setup and Secrets Configuration
+## GitHub Application Setup and Secrets Configuration
 
 To create your own GitHub Application to use with this repository:
 
 1. Create a GitHub application on GitHub, following these [instructions](https://developer.github.com/apps/building-github-apps/creating-a-github-app/).
 This [link](https://developer.github.com/apps/quickstart-guides/setting-up-your-development-environment/) may also be helpful when setting up a new GitHub application.
 
-2. Clone this repository and copy `secrets.example.yaml` to `secrets.yaml` in the root of the repository. Fill in the values in `secrets.yaml` with respective data for your GitHub application. See table below for `secrets.yaml` key-value mappings.
+2. Clone this repository and copy `secrets.example.yaml` to `secrets.stage.yaml` and `secrets.prod.yaml` in the root of the repository. Fill in the values in `secrets.*.yaml` with respective data for your GitHub application. See table below for `secrets.yaml` key-value mappings.
 
-#### secrets.yaml
+### secrets.yaml
 
 | Key                      | Description                                                              | Default/Type                     |
 |--------------------------|--------------------------------------------------------------------------| ---------------------------------|
-| `github-app-identifier`  | The ID of the application under the _About_ section found under `Settings / Developer settings / GitHub Apps / your-app` | `None`; type: int |
-| `github-webhook-secret`  | The webhook secret created when the application was created. This can be reset under the settings for the application. | `None`; type string |
-| `github-private-key`     | The private key generated during application creation, this can also be reset under the settings for the application. | `None`; plaintext RSA key |
+| `github.github-app-identifier`  | The ID of the application under the _About_ section found under `Settings / Developer settings / GitHub Apps / your-app` | `None`; type: int |
+| `github.github-webhook-secret`  | The webhook secret created when the application was created. This can be reset under the settings for the application. | `None`; type string |
+| `github.github-private-key`     | The private key generated during application creation, this can also be reset under the settings for the application. | `None`; plaintext RSA key |
 
-### Running This Repo Code Locally
+## Local Development
+This application is set up as a lambda function and uses the [serverless](https://www.serverless.com/) framework to develop locally and deploy.
 
-This project uses [dep](https://golang.github.io/dep/) to manage dependencies. See docs to install.
+Make sure to [install serverless](https://www.serverless.com/framework/docs/getting-started/) on your computer.
 
-#### Run Locally With Docker:
+It is written in [Golang version 1.16](https://golang.org/doc/install), so make sure you also have this installed.
+ 
+The application expects two secrets files for deployment: `secrets.stage.yaml` and `secrets.prod.yaml`.
+Go back to the previous section if you have not configured this secrets file yet.
+For local development `secrets.stage.yaml` is used. 
 
-1. Make sure you have [Docker installed](https://docs.docker.com/v17.12/install/).
+After installing the above you should be able to run the following commands to start the application:
 
-2. Check that you have a `secrets.yaml` file with your GitHub application configuration values in the root of the repository.
-
-3. From the root of the repository, run `docker build -t my-app:latest .` to build the Docker image.
-
-4. After the image has finished building, run `docker run -e env=dev -p 8080:8080 my-app:latest` and you should see a server listening message in your terminal output. This server is set up to receive webhook requests for the application configured in `secrets.yaml`.
-
-5. Get your smee.io link that you [setup earlier](https://developer.github.com/apps/quickstart-guides/setting-up-your-development-environment/#step-1-start-a-new-smee-channel), and run that in another terminal window. Example: `smee --url https://smee.io/qrfeVRbFbffd6vD --path / --port 8080`
-
-6. You are now able to test that you are receiving webhook requests from GitHub. Test this out by sending an event from GitHub and see the output of the request in both terminal windows.
-
-#### Run On Local File System:
-
-1. Make sure you have [Golang installed](https://golang.org/doc/install).
-
-2. Check that you have a `secrets.yaml` file with your GitHub application configuration values in the root of the repository.
-
-3. From inside the `main/` directory, run `go get && go install`, which will create the executable file `go-github-app-boilerplate` in the `$GOBIN` directory.
-
-4. From the root of the repository, run `$GOBIN/go-github-app-boilerplate` and you should see a server listening message. This server is set up to receive webhook requests for the application configured in `secrets.yaml`.
-
-5. Get your smee.io link that you [setup earlier](https://developer.github.com/apps/quickstart-guides/setting-up-your-development-environment/#step-1-start-a-new-smee-channel), and run that in another terminal window. Example: `smee --url https://smee.io/qrfeVRbFbffd6vD --path / --port 8080`
-
-6. You are now able to test that you are receiving webhook requests from GitHub. Test this out by sending an event that the GitHub App is configured to listen for and see the output of the request in both terminal windows.
-
-
-### Pulling Your Secrets From An AWS S3 Bucket
-
-This application supports pulling secrets from an s3 bucket, for both local development as well as for prod deployments.
-
-* First, store your `secrets.yaml` file in an encrypted s3 bucket with `secrets.yaml` as the key and `-stage` or `-prod` at the end of your bucket name, depending on the environment. s3 buckets are globally scoped, so the names must be unique across all AWS accounts.
-
-* Second, add your AWS S3 bucket name and key to the `.aws/config.yaml` file, leaving off the `-stage` or `-prod` from the bucket name, this will be added based on the `env` environment variable set (see Third step).
-
-* Third, set the `env` environment variable to the correct environment, either `stage` for staging or `prod` for production in order to pull from a specific s3 bucket. The environment (`stage` or `prod`) should be appended to the end of the bucket name, ie if the bucket name is `my-app-secrets` then the expectation is that there is a bucket named `my-app-secrets-stage` and/or `my-app-secrets-prod` in those respective AWS environments.
-
-#### Local Setup
-
-1. Make sure to configure your AWS credentials, [see docs](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
-
-
-##### Run With Docker
-
-* From the root of the repository, build the docker image and pass in the following environment variables to the run command:
-```
-docker run
--e AWS_ACCESS_KEY_ID=<your-aws-access-key>
--e AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key>
--e AWS_REGION=<your-aws-region>
--p 8080:8080 mts:latest
+```bash
+npm install
+make start
 ```
 
-| Environment Variables           | Description                                                              | Default |
-|---------------------------------|--------------------------------------------------------------------------|---------|
-| `AWS_ACCESS_KEY_ID`             | AWS credential - AWS Access Key Id                                       | `None`  |
-| `AWS_SECRET_ACCESS_KEY`         | AWS credential - AWS Secret Access Key                                   | `None`  |
-| `AWS_REGION`                    | The default AWS region where the s3 bucket lives                         | `None`  |
+These commands will build the golang binary and run the lambda through the [serverless-offline plugin](https://github.com/dherault/serverless-offline).
 
-##### Run On Local File System
+For extra debugging output, add `SLS_DEBUG=*` in front of the `npm > start` command in `package.json` like so: `"start": "SLS_DEBUG=* sls offline start --printOutput"`.
 
-* If you have configured your AWS credentials in step 1, then you should have a `~/.aws/credentials` file that looks like the following, though you may need to add a default region:
+To receive events from the GitHub staging application, visit the application you set up in github.com and set the webhook url to a smee proxy url, which you can create at [smee.io](smee.io).
 
+Run the smee proxy locally with the following command: 
 ```
-[default]
-aws_access_key_id = <your-access-key-id>
-aws_secret_access_key = <your-access-key>
-region = <your-region>
+smee --url https://smee.io/c926vE5gmuwgsGY --path /webhooks --port 3000
+```
+This will forward all traffic received by the smee url to `localhost:3000/`, which is the default location of the locally running serverless application.
+
+Test this out by leaving a comment on a pull request in a repo that you installed the github application on in github.com. You should see the event be captured in the `Advanced` tab in the github application settings page in github.com, as well as the event received by the smee proxy and the application.
+
+
+## Deployment - Stage/Prod
+After working locally, you can start testing in the staging environment and then eventually deploy to production.
+
+The serverless framework deploys lambda functions into AWS, therefore you should make sure that your [AWS credentials are configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) locally before running the following commands:
+
+```bash
+# deploy to staging env:
+make deploy-stage
+
+# deploy to prod env:
+make deploy-prod
 ```
 
-* The AWS CLI will look up the credential chain and find this file. You may also set these values in your shell window.
+Once the lambda is deployed, update the webhook url in the relevant github application configuration, noted above, in github.com. This will then start sending the requests to your lamdba function.
 
-* To run the github app, simply run `go get && go install` from inside the `main/` directory,
+Check the logs in the lambda function as well as on the github application event stream (under `Advanced` side panel).
 
-* Then run `env=prod $GOBIN/main` or `env=stage $GOBIN/main` to trigger pulling secrets from your specified s3 bucket.
+Note: you may see some requests receive a *time out* error in GitHub, but you will see that the request actually did complete, the process just took longer than one service was expecting.
 
-#### Production/Multi Environment Setup
-
-* The Dockerfile's default `env` is set to `prod`, but you can also pass the environment variable as a [build-arg](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg), ie `--build-arg env=stage`.
-In order for your deployment service to be able to access your s3 bucket, you will need to add the `AmazonS3ReadOnlyAccess` policy to your service role, as well as add a policy to your s3 bucket that gives permission for your service role to access your s3 bucket.
-
-* Once these are setup, just make sure that you have your S3 bucket information saved in `.aws/config.yaml`, following the steps at the beginning of this section, titled: `Pulling Your Secrets From An s3 Bucket`, or set the environment variables in your shell window.
+### Remove Resources
+If you want to remove something that you created, then have your AWS credentials set and run `sls remove`. This will remove all the resources that the serverless framework created.
 
 ## Future Features
 

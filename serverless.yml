@@ -1,0 +1,60 @@
+service: go-github-app-boilerplate
+
+configValidationMode: error
+
+frameworkVersion: ^2.52.1
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-resource-tagging
+  - serverless-plugin-warmup
+
+package:
+  exclude:
+    - ./**
+  include:
+    - ./bin/**
+    - ./secrets.*.yaml
+
+custom:
+  defaultStage: stage
+  currentStage: ${opt:stage, self:custom.defaultStage} # use the --stage flag to set 'stage' or 'prod' envs
+  CONFIG_FILE: secrets.${self:custom.currentStage}.yaml
+  serverless-offline:
+    useDocker: true
+    noPrependStageInUrl: true
+  warmup:
+    default:
+      enabled: true
+      events:
+        - schedule: cron(0/5 8-17 ? * MON-FRI *)
+      concurrency: 1
+    timeout: 20
+    prewarm: true
+    testWarmer:
+      enabled: false
+
+provider:
+  lambdaHashingVersion: 20201221
+  name: aws
+  stage: ${self:custom.currentStage}
+  runtime: go1.x
+  environment:
+    environment: ${self:custom.currentStage}
+  stackTags:
+    owner: "go-github-app-boilerplate"
+    environment: ${self:custom.currentStage}
+
+functions:
+  webhooks:
+    handler: bin/app.go
+    timeout: 60
+    environment:
+      CONFIG_FILE: ${self:custom.CONFIG_FILE}
+    events:
+      - http:
+          path: webhooks
+          method: post
+    warmup:
+      default:
+        enabled: true

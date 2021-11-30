@@ -1,0 +1,15 @@
+{
+  "name": "go-github-app-boilerplate",
+  "version": "2.0.0",
+  "description": "go-github-app-boilerplate",
+  "scripts": {
+    "start": "sls offline start --printOutput",
+    "watch": "nodemon --watch ./bin -e go,js --exec make build-mac"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12",
+    "serverless-offline": "^8.0.0",
+    "serverless-plugin-resource-tagging": "^1.1.1",
+    "serverless-plugin-warmup": "^5.3.1"
+  }
+}
