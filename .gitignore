@@ -19,3 +19,8 @@
 .env
 secrets.yaml
 secrets.*.yaml
+
+# the serverless branch uses the serverless library
+node_modules
+.serverless
+bin
