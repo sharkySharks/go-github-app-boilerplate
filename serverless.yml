@@ -1,4 +1,4 @@
-service: go-github-app-boilerplate
+service: ${self:custom.projectName}
 
 configValidationMode: error
 
@@ -20,6 +20,7 @@ custom:
   defaultStage: stage
   currentStage: ${opt:stage, self:custom.defaultStage} # use the --stage flag to set 'stage' or 'prod' envs
   CONFIG_FILE: secrets.${self:custom.currentStage}.yaml
+  projectName: go-github-app-boilerplate
   serverless-offline:
     useDocker: true
     noPrependStageInUrl: true
@@ -42,7 +43,7 @@ provider:
   environment:
     environment: ${self:custom.currentStage}
   stackTags:
-    owner: "go-github-app-boilerplate"
+    owner: ${self:custom.projectName}
     environment: ${self:custom.currentStage}
 
 functions:

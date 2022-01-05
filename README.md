@@ -2,12 +2,19 @@
 
 ![go-github](go-github.png)
 
-Boilerplate for creating a GitHub App in Golang. This is the serverless/lambda version. For the container version of the application, checkout the `container` branch.
+Boilerplate for creating a GitHub App in Golang, using [sharkysharks/go-github-app-boilerplate](https://github.com/sharkysharks/go-github-app-boilerplate) repo. 
+
+This is the serverless/lambda version. For the container version of the application, checkout the `container` branch of the repository.
 
 [GitHub apps](https://docs.github.com/en/free-pro-team@latest/developers/apps/getting-started-with-apps) are APIs that are configured with specific GitHub API credentials so that the API can receive and authenticate payloads from GitHub events.
 For a list of github event types that can be subscribed to and acted upon, see github docs: https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 
 This application uses Golang version >=1.16 and [go modules](https://go.dev/blog/using-go-modules).
+
+## Setup Script
+Want ease customizing one or more different github application templates?
+
+Use the setup script to create a new project from the boilerplate code. Run the `make init_setup` command to customize this with your own repository and project name. View the setup script for more details about what this script does.
 
 ## GitHub Application Setup and Secrets Configuration
 
@@ -80,10 +87,3 @@ Note: you may see some requests receive a *time out* error in GitHub, but you wi
 
 ### Remove Resources
 If you want to remove something that you created, then have your AWS credentials set and run `sls remove`. This will remove all the resources that the serverless framework created.
-
-## Future Features
-
-"...a work is never truly completed [...] but abandoned..." Paul Valéry
-
-Nice-to-have features:
-- add testing

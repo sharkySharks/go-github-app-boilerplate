@@ -1,7 +1,7 @@
 {
   "name": "go-github-app-boilerplate",
   "version": "2.0.0",
-  "description": "go-github-app-boilerplate",
+  "description": "GitHub application API responding to configured github event types",
   "scripts": {
     "start": "sls offline start --printOutput",
     "watch": "nodemon --watch ./bin -e go,js --exec make build-mac"
