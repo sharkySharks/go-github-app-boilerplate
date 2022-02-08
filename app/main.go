@@ -85,7 +85,7 @@ func Handler(ctx context.Context, request Request) (Response, error) {
 		log.Errorf("Error authenticating request: %v", err)
 		return Response{StatusCode: 401}, err
 	}
-	log.Info("Payload validated and authenticated.")
+	log.Info(fmt.Sprintf("[%s] Payload validated and authenticated.", event.XGithubRequestId))
 	res := app(request)
 	return res, nil
 }

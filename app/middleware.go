@@ -67,7 +67,7 @@ func unmarshallGitHubRequest(body []byte) (*GitHubEvent, error) {
 
 // middleware: authenticate as Github App
 func authenticate() error {
-	log.Info(fmt.Sprintf("authenticating request for event: %v", event))
+	log.Info(fmt.Sprintf("[%s] authenticating request for event: %v", event.XGithubRequestId, event))
 	c, err := initGitHubClient(
 		event.Installation.Id,
 		int64(conf.GithubApp.GithubAppIdentifier),

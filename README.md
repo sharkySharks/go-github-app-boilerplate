@@ -88,4 +88,4 @@ Check the logs in the lambda function as well as on the github application event
 Note: you may see some requests receive a *time out* error in GitHub, but you will see that the request actually did complete, the process just took longer than one service was expecting.
 
 ### Remove Resources
-If you want to remove something that you created, then have your AWS credentials set and run `sls remove`. This will remove all the resources that the serverless framework created.
+If you want to remove something that you created, then have your AWS credentials set and run `sls remove --stage <stage|prod>`. This will remove all the resources that the serverless framework created.

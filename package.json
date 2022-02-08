@@ -9,6 +9,6 @@
     "nodemon": "^2.0.12",
     "serverless-offline": "^8.0.0",
     "serverless-plugin-resource-tagging": "^1.1.1",
-    "serverless-plugin-warmup": "^5.3.1"
+    "serverless-plugin-warmup": "^7.0.2"
   }
 }
