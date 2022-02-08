@@ -29,10 +29,10 @@ build-app: clean
 	go mod tidy && \
 	go mod download && \
 	cd app && \
-	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../bin/app.go .
+	env GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ../bin/app.go .
 
 run-local:
-	export CONFIG_FILE="./secrets.stage.yaml" && npm start
+	export CONFIG_FILE="./secrets.local.yaml" && npm start
 
 start: build-app run-local
 
@@ -48,7 +48,6 @@ deploy-prod: clean build-all
 gofmt:
 	@echo "Formatting files..."
 	gofmt -s -l -w config
-	gofmt -s -l -w github
 	gofmt -s -l -w app
 	gofmt -s -l -w setup
 

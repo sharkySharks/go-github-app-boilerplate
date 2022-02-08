@@ -10,43 +10,34 @@ import (
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
-	"sync"
 )
 
 /*
 	Add top level GitHub request payload keys to this struct based on the events the app is subscribing to and pull in
-	the type from the go-github/github library
+	the type from the go-github/github library: https://github.com/google/go-github
 */
-type WebhookAPIRequest struct {
-	Action       string              `json:"action,omitempty"`
-	Installation AppInstallation     `json:"installation,omitempty"`
-	Issue        github.Issue        `json:"issue,omitempty"`
-	IssueComment github.IssueComment `json:"comment,omitempty"`
-	Repo         github.Repository   `json:"repository,omitempty"`
-	Sender       github.User         `json:"sender,omitempty"`
+type GitHubEvent struct {
+	Action           string              `json:"action"`
+	Installation     AppInstallation     `json:"installation,omitempty"`
+	Issue            github.Issue        `json:"issue,omitempty"`
+	IssueComment     github.IssueComment `json:"comment,omitempty"`
+	Repo             github.Repository   `json:"repository,omitempty"`
+	Sender           github.User         `json:"sender,omitempty"`
+	XGithubEvent     string              `json:"-"` // this value comes from the header x-github-event
+	XGithubRequestId string              `json:"-"` // this value comes from the header x-github-delivery
 }
 
 type AppInstallation struct {
 	Id int64 `json:"id"`
 }
 
-type Event struct {
-	Type   string
-	Repo   string
-	Action string
-	Sender string
-	ID     string
-	Num    int64
-}
-
 type Response events.APIGatewayProxyResponse
 type Request events.APIGatewayProxyRequest
 
 var (
-	client  *github.Client
-	conf    *config.Config
-	mutex   sync.Mutex
-	payload *WebhookAPIRequest
+	ghClient *github.Client
+	conf     *config.Config
+	event    *GitHubEvent
 )
 
 func init() {
@@ -61,6 +52,23 @@ func init() {
 		log.Fatal("Error reading config file: ", err)
 	}
 	conf = c
+
+	// if you need access to the aws api to take action based on an incoming event, then you will need credentials stored locally
+	// these values will only be used locally, they will not be deployed
+	// for deployment you will need to configure serverless.yaml to include the iam role statements with needed permissions
+	//if os.Getenv("IS_OFFLINE") == "true" {
+	//	log.Info("Setting AWS env vars in offline mode - local development only")
+	//
+	//	_ = os.Setenv("AWS_ACCESS_KEY_ID", conf.AWS.AWS_ACCESS_KEY_ID)
+	//	_ = os.Setenv("AWS_SECRET_ACCESS_KEY", conf.AWS.AWS_SECRET_ACCESS_KEY)
+	//	_ = os.Setenv("AWS_SECURITY_TOKEN", conf.AWS.AWS_SECURITY_TOKEN)
+	//	_ = os.Setenv("AWS_SESSION_TOKEN", conf.AWS.AWS_SESSION_TOKEN)
+	//
+	//	if os.Getenv("AWS_ACCESS_KEY_ID") == "" {
+	//		log.Fatal("Need to set AWS credentials in secrets.local.yaml config file for local development")
+	//		os.Exit(1)
+	//	}
+	//}
 }
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
@@ -87,72 +95,82 @@ func main() {
 // application
 func app(request Request) Response {
 	/*
-		xGithubEvent : github event that is being received. See github docs for more info on event types: https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
-		xGithubDelivery : match the xGithubDelivery to the webhook event logs under the github app settings in the github web console
-						  this is helpful for debugging webhook events. depending on the proxy being used, headers can be lowercase or uppercase
-		event : add specific payload data to the event struct to pass to your next function
-	*/
-	var (
-		xGithubEvent    string
-		xGithubDelivery string
-	)
-	if request.Headers["X-GitHub-Event"] == "" {
-		xGithubEvent = request.Headers["x-github-event"]
-		xGithubDelivery = request.Headers["x-github-delivery"]
-	} else {
-		xGithubEvent = request.Headers["X-GitHub-Event"]
-		xGithubDelivery = request.Headers["X-GitHub-Delivery"]
-	}
-
-	var event = Event{
-		xGithubEvent,
-		*payload.Repo.Name,
-		payload.Action,
-		*payload.Sender.Login,
-		xGithubDelivery,
-		*payload.Issue.ID,
-	}
-
-	log.Info("app:xGithubEvent: ", xGithubEvent)
-	log.Info("app:event: ", event)
-
-	/*
 		this section is where webhook events will be received after passing through middleware validation
-		below is an example of handling a comment on a pull request
+		below is an example of handling a comment on a pull request including checking if a user has write permissions on the repo
 		to work, the GitHub app would need to be configured in GitHub to subscribe to Issue Comment creation events
 	*/
 	if request.HTTPMethod == "POST" {
-		switch xGithubEvent {
+		switch event.XGithubEvent {
 		case "issue_comment":
-			if payload.Action == "created" {
-				comment := strings.TrimSpace(*payload.IssueComment.Body)
+			if event.Action == "created" {
+				// example code: check if the user has write permissions to the repo before allowing them to run tests
+				hasPermission, err := hasWritePermission(event)
+				if err != nil {
+					err := fmt.Sprintf("[GitHub Request Id %s] error returned from GetPermissionLevel: %v", event.XGithubRequestId, err)
+					log.Error(err)
+					return Response{StatusCode: 424, Body: err}
+				}
+				if !hasPermission {
+					msg := fmt.Sprintf("[GitHub Request Id %s] user unauthorized for running tests on repo. User: %s PR: %d",
+						event.XGithubRequestId,
+						*event.Sender.Login,
+						*event.Issue.Number,
+					)
+					log.Info(msg)
+					return Response{StatusCode: 200, Body: msg}
+				}
+				msg := fmt.Sprintf("[GitHub Request Id %s] User validated for repo with admin or write access: User %s, Repo: %s/%s",
+					event.XGithubRequestId,
+					*event.Sender.Login,
+					*event.Repo.Owner.Login,
+					*event.Repo.Name,
+				)
+				log.Info(msg)
+
+				comment := strings.TrimSpace(*event.IssueComment.Body)
 				switch comment {
 				case "run all tests":
-					log.Info("Received event to run all tests")
+					log.Info(fmt.Sprintf("[GitHub Request Id %s] Received comment: %v", event.XGithubRequestId, comment))
 					// execute some code here based on receiving a comment on a pull request
 					// ie, respondToComment(comment, event)
 					return Response{StatusCode: 200, Body: fmt.Sprintf("Received comment: %v", comment)}
 				default:
-					str := fmt.Sprintf("Received an unhandled comment: %v", comment)
-					log.Info(str)
-					return Response{StatusCode: 404, Body: str}
+					str := fmt.Sprintf("[GitHub Request Id %s] Received an unhandled comment: %s", event.XGithubRequestId, comment)
+					log.Debug(str)
+					return Response{StatusCode: 200, Body: str}
 				}
 			}
 			fallthrough
 		case "installation":
-			if payload.Action == "created" {
-				log.Info("Received installation request")
+			if event.Action == "created" {
+				log.Info(fmt.Sprintf("[GitHub Request Id %s] Received installation request", event.XGithubRequestId))
 				return Response{StatusCode: 200, Body: "Received installation request"}
 			}
 			fallthrough
 		default:
-			e := fmt.Errorf("cannot find handler for event type: %v and/or action type: %v", xGithubEvent, payload.Action)
+			e := fmt.Errorf("[GitHub Request Id %s] cannot find handler for event type: %s and/or action type: %s",
+				event.XGithubRequestId,
+				event.XGithubEvent,
+				event.Action,
+			)
 			log.Error(e)
-			return Response{Body: e.Error(), StatusCode: 404}
+			return Response{Body: e.Error(), StatusCode: 200}
 		}
-	} else {
-		e := fmt.Errorf("method not allowed: %v", request.HTTPMethod)
-		log.Error(e)
-		return Response{Body: e.Error(), StatusCode: 405}
 	}
+
+	e := fmt.Errorf("[GitHub Request Id %s] method not allowed: %s", event.XGithubRequestId, request.HTTPMethod)
+	log.Error(e)
+	return Response{Body: e.Error(), StatusCode: 405}
+}
+
+//hasPermission returns a boolean based on whether a user has the 'admin' or 'write' (true) or other permission level (false)
+func hasWritePermission(event *GitHubEvent) (bool, error) {
+	permissionLevel, _, err := ghClient.Repositories.GetPermissionLevel(context.Background(), *event.Repo.Owner.Login, *event.Repo.Name, *event.Sender.Login)
+	if err != nil {
+		return false, err
+	}
+	if *permissionLevel.Permission == "admin" || *permissionLevel.Permission == "write" {
+		return true, nil
+	}
+	return false, nil
 }

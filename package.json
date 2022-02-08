@@ -3,8 +3,7 @@
   "version": "2.0.0",
   "description": "GitHub application API responding to configured github event types",
   "scripts": {
-    "start": "sls offline start --printOutput",
-    "watch": "nodemon --watch ./bin -e go,js --exec make build-mac"
+    "start": "SLS_DEBUG=* sls offline start --printOutput"
   },
   "devDependencies": {
     "nodemon": "^2.0.12",

@@ -23,15 +23,19 @@ To create your own GitHub Application to use with this repository:
 1. Create a GitHub application on GitHub, following these [instructions](https://developer.github.com/apps/building-github-apps/creating-a-github-app/).
 This [link](https://developer.github.com/apps/quickstart-guides/setting-up-your-development-environment/) may also be helpful when setting up a new GitHub application.
 
-2. Clone this repository and copy `secrets.example.yaml` to `secrets.stage.yaml` and `secrets.prod.yaml` in the root of the repository. Fill in the values in `secrets.*.yaml` with respective data for your GitHub application. See table below for `secrets.yaml` key-value mappings.
+2. Clone this repository and copy `secrets.example.yaml` to `secrets.local.yaml`, `secrets.stage.yaml` and `secrets.prod.yaml` in the root of the repository. Fill in the values in `secrets.*.yaml` with respective data for your GitHub application. See table below for `secrets.yaml` key-value mappings.
 
 ### secrets.yaml
 
-| Key                      | Description                                                              | Default/Type                     |
-|--------------------------|--------------------------------------------------------------------------| ---------------------------------|
+| Key                      | Description                                                                                      | Default/Type                     |
+|--------------------------|--------------------------------------------------------------------------------------------------| ---------------------------------|
 | `github.github-app-identifier`  | The ID of the application under the _About_ section found under `Settings / Developer settings / GitHub Apps / your-app` | `None`; type: int |
 | `github.github-webhook-secret`  | The webhook secret created when the application was created. This can be reset under the settings for the application. | `None`; type string |
 | `github.github-private-key`     | The private key generated during application creation, this can also be reset under the settings for the application. | `None`; plaintext RSA key |
+| `aws.AWS_ACCESS_KEY_ID`         | [local config only] aws credential - retrieve from AWS                                           | `None`; type string |
+| `aws.AWS_SECRET_ACCESS_KEY`     | [local config only] aws credential - retrieve from AWS                                           | `None`; type string |
+| `aws.AWS_SESSION_TOKEN`         | [local config only] aws credential - retrieve from AWS                                           | `None`; type string |
+| `aws.AWS_SECURITY_TOKEN`        | [local config only] aws credential - retrieve from AWS                                           | `None`; type string |
 
 ## Local Development
 This application is set up as a lambda function and uses the [serverless](https://www.serverless.com/) framework to develop locally and deploy.
@@ -42,7 +46,7 @@ It is written in [Golang version 1.16](https://golang.org/doc/install), so make 
  
 The application expects two secrets files for deployment: `secrets.stage.yaml` and `secrets.prod.yaml`.
 Go back to the previous section if you have not configured this secrets file yet.
-For local development `secrets.stage.yaml` is used. 
+For local development `secrets.local.yaml` is used. 
 
 After installing the above you should be able to run the following commands to start the application:
 
@@ -52,8 +56,6 @@ make start
 ```
 
 These commands will build the golang binary and run the lambda through the [serverless-offline plugin](https://github.com/dherault/serverless-offline).
-
-For extra debugging output, add `SLS_DEBUG=*` in front of the `npm > start` command in `package.json` like so: `"start": "SLS_DEBUG=* sls offline start --printOutput"`.
 
 To receive events from the GitHub staging application, visit the application you set up in github.com and set the webhook url to a smee proxy url, which you can create at [smee.io](smee.io).
 

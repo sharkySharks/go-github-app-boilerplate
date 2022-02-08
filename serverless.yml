@@ -17,8 +17,8 @@ package:
     - ./secrets.*.yaml
 
 custom:
-  defaultStage: stage
-  currentStage: ${opt:stage, self:custom.defaultStage} # use the --stage flag to set 'stage' or 'prod' envs
+  defaultStage: local
+  currentStage: ${opt:stage, self:custom.defaultStage} # use the --stage flag to set 'local' or 'stage' or 'prod' envs
   CONFIG_FILE: secrets.${self:custom.currentStage}.yaml
   projectName: go-github-app-boilerplate
   serverless-offline:
@@ -45,6 +45,12 @@ provider:
   stackTags:
     owner: ${self:custom.projectName}
     environment: ${self:custom.currentStage}
+# add iam role statements here to allow or deny access to resources in aws
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - codebuild:StartBuild
+#      Resource: "*"
 
 functions:
   webhooks:
