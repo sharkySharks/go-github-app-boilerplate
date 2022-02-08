@@ -53,9 +53,11 @@ func init() {
 	}
 	conf = c
 
-	// if you need access to the aws api to take action based on an incoming event, then you will need credentials stored locally
-	// these values will only be used locally, they will not be deployed
-	// for deployment you will need to configure serverless.yaml to include the iam role statements with needed permissions
+	/*
+			if you need access to the aws api to take action based on an incoming event, then you will need credentials stored locally
+		 	these values will only be used locally, they will not be deployed
+		 	for deployment you will need to configure serverless.yaml to include the iam role statements with needed permissions
+	*/
 	//if os.Getenv("IS_OFFLINE") == "true" {
 	//	log.Info("Setting AWS env vars in offline mode - local development only")
 	//

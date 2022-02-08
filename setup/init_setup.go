@@ -7,11 +7,14 @@ package main
    - customize the application files with your project name
    - change go.mod module to your repo location
    - add your repo as a new git remote to push the code to
+   - output next steps about what to do with the setup
 */
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -36,71 +39,99 @@ func main() {
 	isValidRepoDest, _ := regexp.MatchString(`^(https://|git@)[a-zA-Z.]+(:|/)[a-zA-Z-_]+/[a-zA-Z-_]+.git$`, repo)
 	if !isValidRepoDest {
 		fmt.Printf("The repo url is not in one of the following patterns: https://github.com/user/repo.git || git@github.com:user/repo.git\nyour entry: %s\n", repo)
-		return
+		os.Exit(1)
 	}
 	Repo = repo
 
-	// checkout new git branch with ProjectNameWithDashes
-	cmd := exec.Command(
-		"git",
-		"checkout",
-		"-b",
-		ProjectNameWithDashes,
-	)
-	err := cmd.Run()
-	if err != nil {
-		fmt.Printf("[git checkout] error: %v", err)
-		return
-	}
-	// add git remote with repo
-	cmd2 := exec.Command(
+	gitAddRemote := exec.Command(
 		"git",
 		"remote",
 		"add",
 		ProjectNameWithDashes,
 		Repo,
 	)
-	err = cmd2.Run()
+	err := gitAddRemote.Run()
 	if err != nil {
-		fmt.Printf("[git remote add %s %s] error: %v", ProjectNameWithDashes, Repo, err)
-		return
+		fmt.Printf("[git remote add %s %s] error: %v\nCheck if the remote already exists for this project. Remove if necessary.\n", ProjectNameWithDashes, Repo, err)
+		os.Exit(1)
+	}
+
+	// checkout new git branch with ProjectNameWithDashes
+	gitCheckoutBranch := exec.Command(
+		"git",
+		"checkout",
+		"-b",
+		ProjectNameWithDashes,
+	)
+	err = gitCheckoutBranch.Run()
+	if err != nil {
+		fmt.Printf("[git checkout] error: %v\nIf the branch already exists for this project decide to remove the branch or pick a different project name.\n", err)
+		os.Exit(1)
 	}
 
 	// make all needed file changes
-	err = updateFileForProject()
+	err = updateFilesForProject()
 	if err != nil {
-		fmt.Printf("[git remote add %s %s] error: %v", ProjectNameWithDashes, Repo, err)
-		return
+		fmt.Printf("[updateFileForProject] error: %v\n", err)
+		os.Exit(1)
 	}
 
-	// git add + git commit
-	cmd3 := exec.Command(
+	gitAddAll := exec.Command(
 		"git",
 		"add",
 		"--all",
 	)
-	err = cmd3.Run()
+	err = gitAddAll.Run()
 	if err != nil {
-		fmt.Printf("[git add --all] error: %v", err)
-		return
+		fmt.Printf("[git add --all] error: %v\n", err)
+		os.Exit(1)
 	}
-	cmd4 := exec.Command(
+
+	gitCommit := exec.Command(
 		"git",
 		"commit",
 		"-m",
-		fmt.Sprintf("Initialization script: customize files for project %s", ProjectName),
+		fmt.Sprintf("Initialization script: customize files for project %s\n", ProjectName),
 	)
-	err = cmd4.Run()
+	err = gitCommit.Run()
 	if err != nil {
-		fmt.Printf("[git commit] error: %v", err)
-		return
+		fmt.Printf("[git commit] error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// return to the default branch: serverless
+	gitCheckoutServerless := exec.Command(
+		"git",
+		"checkout",
+		"serverless",
+	)
+	err = gitCheckoutServerless.Run()
+	if err != nil {
+		fmt.Printf("[git checkout serverless] error: %v\n", err)
+		os.Exit(1)
 	}
 	// print message to user on the changes made and next steps to push the branch to their new repo location
 	fmt.Printf(`
 	
-	Insert text here about files that were changed successfully and next steps to push to remote from new branch...
+	Project Setup Completed!
 
-	`)
+	Branch Created with above changes: %s
+	
+	To see all the changes that were made by this script, run the following git command:
+		git diff serverless..%s
+	
+	TL;DR - files updated:
+		- go.mod
+		- package.json
+		- README.md
+		- serverless.yml
+	
+	Remote added: %s
+	
+	When you are ready, push these changes to your remote github repository and start hacking away at your new github app!
+		git push %s %s
+
+	`, ProjectNameWithDashes, ProjectNameWithDashes, Repo, ProjectNameWithDashes, ProjectNameWithDashes)
 
 }
 
@@ -117,14 +148,105 @@ func stringPrompt(prompt string) string {
 	return strings.TrimSpace(s)
 }
 
-func updateFileForProject() error {
+func updateFilesForProject() error {
 	// go.mod : module line should be the Repo url
+	var repoOwner, repoName string
+	switch {
+	case strings.Contains(Repo, "https://"):
+		theSplit := strings.Split(Repo, "/")
+		repoOwner = theSplit[3]
+		repoName = strings.Split(theSplit[4], ".")[0]
+	case strings.Contains(Repo, "git@"):
+		theSplit := strings.Split(Repo, "/")
+		repoOwner = strings.Split(theSplit[0], ":")[1]
+		repoName = strings.Split(theSplit[1], ".")[0]
+	default:
+		return fmt.Errorf("[Repo] url is not in an expected format: %s", Repo)
+	}
+	err := sed(
+		"module github.com/sharkysharks/go-github-app-boilerplate",
+		fmt.Sprintf("module github.com/%s/%s", repoOwner, repoName),
+		"go.mod",
+	)
+	if err != nil {
+		return fmt.Errorf("[sed go.mod] err: %v", err)
+	}
 
-	// package.json : name should be ProjectName
+	// package.json : name should be ProjectName, version should be 0.1.0
+	err = updateJsonFile("package.json")
+	if err != nil {
+		return fmt.Errorf("[sed package.json] err: %v", err)
+	}
 
 	// README.md : first heading should be ProjectName
+	err = sed(
+		"# go-github-app-boilerplate",
+		fmt.Sprintf("# %s", ProjectName),
+		"README.md",
+	)
+	if err != nil {
+		return fmt.Errorf("[sed README.md] err: %v", err)
+	}
 
-	// serverless.yaml : custom.projectName should be ProjectName
+	// serverless.yml : custom.projectName should be ProjectName
+	err = sed(
+		"go-github-app-boilerplate",
+		ProjectNameWithDashes,
+		"serverless.yml",
+	)
+	if err != nil {
+		return fmt.Errorf("[sed serverless.yml] err: %v", err)
+	}
 
+	return nil
+}
+
+func sed(old, new, filePath string) error {
+	fileData, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	fileString := string(fileData)
+	fileString = strings.ReplaceAll(fileString, old, new)
+	fileData = []byte(fileString)
+
+	err = ioutil.WriteFile(filePath, fileData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateJsonFile(filePath string) error {
+	byteVal, err := ioutil.ReadFile("package.json")
+	if err != nil {
+		return err
+	}
+	var data struct {
+		Name            string                 `json:"name"`
+		Version         string                 `json:"version"`
+		Description     string                 `json:"description"`
+		Scripts         map[string]interface{} `json:"scripts"`
+		DevDependencies map[string]interface{} `json:"devDependencies"`
+	}
+	err = json.Unmarshal(byteVal, &data)
+	if err != nil {
+		return err
+	}
+
+	data.Name = ProjectName
+	data.Version = "0.1.0"
+
+	d, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filePath, []byte(d), 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }

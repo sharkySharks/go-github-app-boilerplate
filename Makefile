@@ -19,7 +19,7 @@ init_setup: clean
 	go mod tidy && \
 	go mod download && \
 	cd setup && \
-	GO111MODULE=on CGO_ENABLED=0 GOOS=$$GOOS GOARCH=amd64 go build -ldflags="-s -w" -o ../bin/init_setup.go . && \
+	env GO111MODULE=on CGO_ENABLED=0 GOOS=$$GOOS GOARCH=amd64 go build -ldflags="-s -w" -o ../bin/init_setup.go . && \
 	cd ../ && ./bin/init_setup.go
 
 # if you add more serverless functions then add another build step target and add it to the 'build-all' command
