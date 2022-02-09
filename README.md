@@ -1,4 +1,4 @@
-# go-github-app-boilerplate
+# go-github-app-boilerplate - [Container version - not being maintained in favor of serverless]
 
 ![go-github](go-github.png)
 
