@@ -2,9 +2,7 @@
 
 ![go-github](go-github.png)
 
-Boilerplate for creating a GitHub App in Golang, using [sharkysharks/go-github-app-boilerplate](https://github.com/sharkysharks/go-github-app-boilerplate) repo. 
-
-This is the serverless/lambda version. For the container version of the application, checkout the `container` branch of the repository.
+Boilerplate for creating a GitHub App in Golang, using [sharkysharks/go-github-app-boilerplate](https://github.com/sharkysharks/go-github-app-boilerplate) repo.
 
 [GitHub apps](https://docs.github.com/en/free-pro-team@latest/developers/apps/getting-started-with-apps) are APIs that are configured with specific GitHub API credentials so that the API can receive and authenticate payloads from GitHub events.
 For a list of github event types that can be subscribed to and acted upon, see github docs: https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
