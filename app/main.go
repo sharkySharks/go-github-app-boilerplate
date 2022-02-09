@@ -135,6 +135,18 @@ func app(request Request) Response {
 					log.Info(fmt.Sprintf("[GitHub Request Id %s] Received comment: %v", event.XGithubRequestId, comment))
 					// execute some code here based on receiving a comment on a pull request
 					// ie, respondToComment(comment, event)
+					successMsg := fmt.Sprintf("Successfully received comment: %s", comment)
+					_, _, err := ghClient.Issues.CreateComment(context.Background(), *event.Repo.Owner.Login, *event.Repo.Name, *event.Issue.Number,
+						&github.IssueComment{
+							Body: &successMsg,
+						})
+					if err != nil {
+						log.Error(fmt.Sprintf("[GitHub Request Id %s] Error leaving comment on pull request %d: %v",
+							event.XGithubRequestId,
+							*event.Issue.Number,
+							err,
+						))
+					}
 					return Response{StatusCode: 200, Body: fmt.Sprintf("Received comment: %v", comment)}
 				default:
 					str := fmt.Sprintf("[GitHub Request Id %s] Received an unhandled comment: %s", event.XGithubRequestId, comment)
