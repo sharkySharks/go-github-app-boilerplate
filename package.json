@@ -1,15 +1,14 @@
 {
   "name": "go-github-app-boilerplate",
-  "version": "1.0.0",
-  "description": "go-github-app-boilerplate",
+  "version": "2.0.0",
+  "description": "GitHub application API responding to configured github event types",
   "scripts": {
-    "start": "sls offline start --printOutput",
-    "watch": "nodemon --watch ./bin -e go,js --exec make build-mac"
+    "start": "SLS_DEBUG=* sls offline start --printOutput"
   },
   "devDependencies": {
     "nodemon": "^2.0.12",
     "serverless-offline": "^8.0.0",
     "serverless-plugin-resource-tagging": "^1.1.1",
-    "serverless-plugin-warmup": "^5.3.1"
+    "serverless-plugin-warmup": "^7.0.2"
   }
 }

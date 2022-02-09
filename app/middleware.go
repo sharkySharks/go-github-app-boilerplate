@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v37/github"
-	gc "github.com/sharkysharks/go-github-app-boilerplate/github"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"strings"
 )
 
@@ -12,9 +14,12 @@ import (
 func validatePayload(request Request) error {
 	// depending on the proxy, headers can be lowercase or uppercase
 	var (
-		xHubSignature string
+		xHubSignature    string
+		xGithubEvent     string
+		xGitHubRequestId string
 	)
 	log.Info("Headers: ", request.Headers)
+
 	if request.Headers["X-Hub-Signature"] == "" {
 		xHubSignature = request.Headers["x-hub-signature"]
 	} else {
@@ -29,30 +34,42 @@ func validatePayload(request Request) error {
 		return err
 	}
 
-	pd, err := getWebhookAPIRequest(p)
+	pd, err := unmarshallGitHubRequest(p)
 	if err != nil {
 		log.Error("Error unmarshalling json payload: ", err)
 		return err
 	}
-	payload = pd
+	event = pd
+	// add header values to the event instance
+	if request.Headers["X-GitHub-Event"] == "" {
+		xGithubEvent = request.Headers["x-github-event"]
+		xGitHubRequestId = request.Headers["x-github-delivery"]
+	} else {
+		xGithubEvent = request.Headers["X-GitHub-Event"]
+		xGitHubRequestId = request.Headers["X-GitHub-Delivery"]
+	}
+	event.XGithubEvent = xGithubEvent
+	event.XGithubRequestId = xGitHubRequestId
+
+	log.Info(fmt.Sprintf("[GitHub Request Id %s] Event loaded.", event.XGithubRequestId))
 	return nil
 }
 
 // middleware: helper function to convert json payload to struct
-func getWebhookAPIRequest(body []byte) (*WebhookAPIRequest, error) {
-	var wh = new(WebhookAPIRequest)
-	err := json.Unmarshal(body, &wh)
+func unmarshallGitHubRequest(body []byte) (*GitHubEvent, error) {
+	var event = new(GitHubEvent)
+	err := json.Unmarshal(body, &event)
 	if err != nil {
 		return nil, err
 	}
-	return wh, nil
+	return event, nil
 }
 
 // middleware: authenticate as Github App
 func authenticate() error {
-	log.Info("authenticating request for payload: ", payload)
-	c, err := gc.InitClient(
-		payload.Installation.Id,
+	log.Info(fmt.Sprintf("[%s] authenticating request for event: %v", event.XGithubRequestId, event))
+	c, err := initGitHubClient(
+		event.Installation.Id,
 		int64(conf.GithubApp.GithubAppIdentifier),
 		[]byte(conf.GithubApp.GithubPrivateKey),
 	)
@@ -60,6 +77,24 @@ func authenticate() error {
 		log.Error("Error initializing client: ", err)
 		return err
 	}
-	client = c
+	ghClient = c
 	return nil
+}
+
+// initGitHubClient initializes a github client to respond back to github after events are received
+func initGitHubClient(installationId int64, githubAppID int64, githubPrivateKey []byte) (*github.Client, error) {
+	tr := http.DefaultTransport
+	itr, err := ghinstallation.New(
+		tr,
+		githubAppID,
+		int64(installationId),
+		githubPrivateKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	c := github.NewClient(&http.Client{Transport: itr})
+
+	return c, nil
 }

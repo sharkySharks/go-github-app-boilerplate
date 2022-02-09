@@ -1,8 +1,6 @@
-service: go-github-app-boilerplate
+service: ${self:custom.projectName}
 
 configValidationMode: error
-
-frameworkVersion: ^2.52.1
 
 plugins:
   - serverless-offline
@@ -10,45 +8,51 @@ plugins:
   - serverless-plugin-warmup
 
 package:
-  exclude:
-    - ./**
-  include:
-    - ./bin/**
-    - ./secrets.*.yaml
+  patterns:
+    - "!**"
+    - "bin/**"
+    - "secrets.*.yaml"
 
 custom:
-  defaultStage: stage
-  currentStage: ${opt:stage, self:custom.defaultStage} # use the --stage flag to set 'stage' or 'prod' envs
+  defaultStage: local
+  currentStage: ${opt:stage, self:custom.defaultStage} # use the --stage flag to set 'local' or 'stage' or 'prod' envs
   CONFIG_FILE: secrets.${self:custom.currentStage}.yaml
+  projectName: go-github-app-boilerplate
   serverless-offline:
     useDocker: true
     noPrependStageInUrl: true
   warmup:
     default:
       enabled: true
+      name: warmer-default
       events:
-        - schedule: cron(0/5 8-17 ? * MON-FRI *)
+        - schedule: 'cron(0/5 8-17 ? * MON-FRI *)'
       concurrency: 1
-    timeout: 20
-    prewarm: true
+      timeout: 20
+      prewarm: true
     testWarmer:
       enabled: false
 
 provider:
-  lambdaHashingVersion: 20201221
   name: aws
   stage: ${self:custom.currentStage}
   runtime: go1.x
   environment:
     environment: ${self:custom.currentStage}
   stackTags:
-    owner: "go-github-app-boilerplate"
+    owner: ${self:custom.projectName}
     environment: ${self:custom.currentStage}
+# add iam role statements here to allow or deny access to resources in aws
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - codebuild:StartBuild
+#      Resource: "*"
 
 functions:
   webhooks:
     handler: bin/app.go
-    timeout: 60
+    timeout: 30
     environment:
       CONFIG_FILE: ${self:custom.CONFIG_FILE}
     events:
