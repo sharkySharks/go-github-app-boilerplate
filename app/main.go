@@ -135,7 +135,7 @@ func app(request Request) Response {
 					log.Info(fmt.Sprintf("[GitHub Request Id %s] Received comment: %v", event.XGithubRequestId, comment))
 					// execute some code here based on receiving a comment on a pull request
 					// ie, respondToComment(comment, event)
-					successMsg := fmt.Sprintf("Successfully received comment: %s", comment)
+					successMsg := fmt.Sprintf("Successfully received comment: `%s`", comment)
 					_, _, err := ghClient.Issues.CreateComment(context.Background(), *event.Repo.Owner.Login, *event.Repo.Name, *event.Issue.Number,
 						&github.IssueComment{
 							Body: &successMsg,
