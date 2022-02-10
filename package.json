@@ -1,6 +1,6 @@
 {
   "name": "go-github-app-boilerplate",
-  "version": "2.0.0",
+  "version": "2.1.1",
   "description": "GitHub application API responding to configured github event types",
   "scripts": {
     "start": "SLS_DEBUG=* sls offline start --printOutput"
